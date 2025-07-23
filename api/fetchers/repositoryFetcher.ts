@@ -1,4 +1,4 @@
-import { getLogger } from '../utils';
+import { getLogger, buildRawUrl } from '../utils';
 import type { FetchResult } from '../interfaces/lyricTypes';
 import type { LyricFetcher } from '../interfaces/fetcher';
 import { prisma } from '../db';
@@ -25,9 +25,54 @@ export class RepositoryFetcher implements LyricFetcher {
       if (lyric) {
         logger.info(`Success for ${format.toUpperCase()} for track ${id} from database`);
         return { status: 'found', format, content: lyric.content, source: 'repository' };
-      } else {
-        logger.info(`No lyric found for ${format.toUpperCase()} for track ${id} in database`);
+      }
+
+      // Fall back to GitHub raw file
+      logger.info(`No lyric in DB. Falling back to GitHub for ${format.toUpperCase()} track ${id}`);
+      const url = buildRawUrl(id, format);
+      logger.info(`Fetching from GitHub: ${url}`);
+
+      const response = await fetch(url);
+
+      if (response.ok) {
+        const content = await response.text();
+        logger.info(`Fetched ${format.toUpperCase()} for track ${id} from GitHub successfully. Saving to DB.`);
+
+        // Persist to DB for future cache hits
+        try {
+          await prisma.lyric.upsert({
+            where: {
+              trackId_format: {
+                trackId: id,
+                format,
+              },
+            },
+            create: {
+              trackId: id,
+              format,
+              content,
+              source: 'repository',
+            },
+            update: {
+              content,
+            },
+          });
+        } catch (persistErr) {
+          logger.warn(`Failed to persist lyric for track ${id} format ${format} to DB`, persistErr);
+        }
+
+        return { status: 'found', format, content, source: 'repository' };
+      } else if (response.status === 404) {
+        logger.info(`GitHub returned 404 for ${format.toUpperCase()} track ${id}`);
         return { status: 'notfound', format };
+      } else {
+        logger.error(`GitHub returned ${response.status} for ${format.toUpperCase()} track ${id}`);
+        return {
+          status: 'error',
+          format,
+          statusCode: response.status,
+          error: new Error(`HTTP error ${response.status}`),
+        };
       }
     } catch (err) {
       logger.error(`Database error for ${format.toUpperCase()} for track ${id}`, err);
