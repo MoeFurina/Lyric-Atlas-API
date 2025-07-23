@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Add tsx for running TS scripts
+        run: pnpm add -Dw tsx
+
       - name: Checkout lyrics database
         uses: actions/checkout@v4
         with:
@@ -34,4 +37,4 @@ jobs:
       - name: Run sync script
         env:
           PRISMA_DATABASE_URL: ${{ secrets.PRISMA_DATABASE_URL }}
-        run: pnpm exec ts-node scripts/sync-lyrics.ts lyrics-db/ncm-lyrics 
+        run: pnpm exec tsx scripts/sync-lyrics.ts lyrics-db/ncm-lyrics 
