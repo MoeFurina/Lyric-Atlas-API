@@ -2109,11 +2109,11 @@ export namespace Prisma {
 
   export type LyricWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    trackId?: string
     trackId_format?: LyricTrackIdFormatCompoundUniqueInput
     AND?: LyricWhereInput | LyricWhereInput[]
     OR?: LyricWhereInput[]
     NOT?: LyricWhereInput | LyricWhereInput[]
+    trackId?: StringFilter<"Lyric"> | string
     format?: EnumLyricFormatFilter<"Lyric"> | $Enums.LyricFormat
     content?: StringFilter<"Lyric"> | string
     translation?: StringNullableFilter<"Lyric"> | string | null
@@ -2121,7 +2121,7 @@ export namespace Prisma {
     source?: EnumLyricSourceFilter<"Lyric"> | $Enums.LyricSource
     createdAt?: DateTimeFilter<"Lyric"> | Date | string
     updatedAt?: DateTimeFilter<"Lyric"> | Date | string
-  }, "id" | "trackId" | "trackId_format">
+  }, "id" | "trackId_format">
 
   export type LyricOrderByWithAggregationInput = {
     id?: SortOrder

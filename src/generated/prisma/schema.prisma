@@ -30,7 +30,7 @@ enum LyricFormat {
 
 model Lyric {
   id          String      @id @default(cuid())
-  trackId     String      @unique
+  trackId     String
   format      LyricFormat
   content     String      @db.Text
   translation String?     @db.Text
