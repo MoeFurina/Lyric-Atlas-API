@@ -19,6 +19,13 @@ async function processFile(filePath: string) {
 
   const content = await fs.readFile(filePath, 'utf8');
 
+  // 先查现有记录，内容相同就跳过
+  const existing = await prisma.lyric.findUnique({
+    where: { trackId_format: { trackId, format } },
+    select: { content: true },
+  });
+  if (existing?.content === content) return; // 无变化
+
   await prisma.lyric.upsert({
     where: { trackId_format: { trackId, format } },
     create: { trackId, format, content, source: 'repository' },

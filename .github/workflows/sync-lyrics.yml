@@ -25,11 +25,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get lyrics-db latest SHA
+        id: lyrics_sha
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {data} = await github.rest.repos.getCommit({
+              owner: 'Steve-XMH',
+              repo: 'amll-ttml-db',
+              ref: 'heads/main',
+            });
+            core.setOutput('sha', data.sha)
+
+      - name: Restore lyrics cache
+        id: cache_lyrics
+        uses: actions/cache@v4
+        with:
+          path: lyrics-db
+          key: lyrics-db-${{ steps.lyrics_sha.outputs.sha }}
+
       - name: Checkout lyrics database
+        if: steps.cache_lyrics.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: Steve-XMH/amll-ttml-db
           path: lyrics-db
+          ref: ${{ steps.lyrics_sha.outputs.sha }}
 
       - name: Run sync script
         env:
