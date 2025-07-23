@@ -1,0 +1,34 @@
+name: Sync Lyrics
+
+on:
+  schedule:
+    - cron: '0 * * * *' # 每小时运行一次
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout API repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Checkout lyrics database
+        uses: actions/checkout@v4
+        with:
+          repository: Steve-XMH/amll-ttml-db
+          path: lyrics-db
+
+      - name: Run sync script
+        env:
+          PRISMA_DATABASE_URL: ${{ secrets.PRISMA_DATABASE_URL }}
+        run: pnpm exec ts-node scripts/sync-lyrics.ts lyrics-db/ncm-lyrics 
